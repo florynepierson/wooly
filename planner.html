@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MC Planner</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MC Planner">
+<meta name="theme-color" content="#010810">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--gold2:#e8c060;--sky:#5ab0ff;--pale:#d8ecff;--soft:#8ab4d8;--white:#eef6ff;--gold:#c8922a;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:#010810;color:var(--pale);display:flex;flex-direction:column;}
+
+/* TABS */
+.tabs{display:flex;padding:0 16px;gap:6px;flex-shrink:0;padding-top:16px;}
+.tab{flex:1;padding:8px 4px;border-radius:10px;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:all .25s;font-family:'DM Sans',sans-serif;font-weight:500;}
+.tab.active{background:linear-gradient(135deg,rgba(200,146,42,.25),rgba(138,92,16,.3));color:var(--gold2);border:1px solid rgba(200,146,42,.3);}
+.tab.inactive{background:rgba(10,30,62,.4);color:var(--soft);border:1px solid rgba(26,111,212,.1);}
+
+.header{padding:14px 20px 10px;flex-shrink:0;}
+.date-line{font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px;}
+.day-title{font-family:'Cormorant',serif;font-size:1.7rem;color:var(--white);line-height:1.1;}
+.day-title em{font-style:italic;color:var(--sky);}
+.progress-bar{height:3px;background:rgba(26,111,212,.12);border-radius:2px;margin-top:10px;}
+.progress-fill{height:100%;background:linear-gradient(to right,var(--sky),var(--gold2));border-radius:2px;transition:width .4s cubic-bezier(.23,1,.32,1);}
+.progress-text{font-size:.62rem;color:var(--soft);margin-top:4px;letter-spacing:.05em;}
+
+.scroll{flex:1;overflow-y:auto;padding:6px 16px 140px;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+
+.sec-lbl{font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold2);margin:14px 0 7px;opacity:.75;}
+
+/* TASKS */
+.task{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border-radius:12px;margin-bottom:7px;background:rgba(10,30,62,.55);border:1px solid rgba(26,111,212,.1);transition:all .2s;cursor:pointer;user-select:none;}
+.task.priority{background:rgba(200,146,42,.06);border-color:rgba(200,146,42,.18);}
+.task.done{opacity:.38;}
+.task.done .task-name{text-decoration:line-through;}
+.chk{width:22px;height:22px;border-radius:7px;border:1.5px solid rgba(26,111,212,.32);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.task.priority .chk{border-color:rgba(200,146,42,.38);}
+.task.done .chk{background:rgba(26,111,212,.4);border-color:var(--sky);}
+.task.priority.done .chk{background:rgba(200,146,42,.4);border-color:var(--gold2);}
+.chk-ico{font-size:.68rem;color:#fff;display:none;}
+.task.done .chk-ico{display:block;}
+.tb{flex:1;min-width:0;}
+.task-name{font-size:.85rem;color:var(--pale);font-weight:400;line-height:1.3;margin-bottom:2px;}
+.task-detail{font-size:.72rem;color:var(--soft);line-height:1.4;font-weight:300;}
+.bdg{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:20px;flex-shrink:0;margin-top:2px;align-self:flex-start;}
+.bc{background:rgba(26,111,212,.15);color:var(--sky);border:1px solid rgba(26,111,212,.22);}
+.be{background:rgba(90,176,255,.08);color:#7ec8ff;border:1px solid rgba(90,176,255,.15);}
+.bs{background:rgba(200,146,42,.1);color:var(--gold2);border:1px solid rgba(200,146,42,.18);}
+.br{background:rgba(255,180,80,.1);color:#ffb450;border:1px solid rgba(255,180,80,.18);}
+.bv{background:rgba(120,200,120,.08);color:#90d890;border:1px solid rgba(120,200,120,.18);}
+
+/* TIPS TAB */
+.tip-card{background:linear-gradient(160deg,rgba(10,30,62,.9),rgba(4,14,34,.95));border:1px solid rgba(26,111,212,.15);border-radius:14px;padding:16px;margin-bottom:10px;}
+.tip-card.gold{border-color:rgba(200,146,42,.22);background:rgba(8,24,56,.9);}
+.tip-cat{font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px;}
+.tip-title{font-family:'Cormorant',serif;font-size:1.05rem;color:var(--white);margin-bottom:6px;line-height:1.3;}
+.tip-body{font-size:.78rem;color:var(--soft);line-height:1.6;}
+.tip-body strong{color:var(--pale);}
+.tip-link{font-size:.72rem;color:var(--sky);margin-top:6px;display:block;text-decoration:none;}
+
+/* WOOLY */
+#wooly-area{position:fixed;bottom:0;left:0;right:0;padding:10px 18px 22px;background:linear-gradient(to top,#010810 65%,transparent);display:flex;align-items:flex-end;gap:10px;pointer-events:none;}
+#wooly-svg{width:80px;height:80px;flex-shrink:0;cursor:pointer;pointer-events:all;filter:drop-shadow(0 4px 16px rgba(90,176,255,.25));animation:wb 2.4s ease-in-out infinite;transform-origin:center bottom;}
+#wooly-svg:active{transform:scale(.9);}
+#wbubble{background:linear-gradient(160deg,rgba(8,28,68,.98),rgba(3,12,34,.99));border:1px solid rgba(200,146,42,.28);border-radius:14px 14px 14px 4px;padding:10px 13px;font-size:.8rem;color:var(--pale);line-height:1.55;max-width:230px;pointer-events:all;cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;font-family:'Cormorant',serif;font-style:italic;}
+#wbubble.show{opacity:1;transform:translateY(0);}
+@keyframes wb{0%,100%{transform:translateY(0) rotate(-2deg);}40%{transform:translateY(-9px) rotate(2deg);}70%{transform:translateY(-3px) rotate(-1deg);}}
+
+#bgCanvas{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.45;}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('tasks')">📋 Aujourd'hui</button>
+  <button class="tab inactive" onclick="showTab('tips')">💡 Conseils</button>
+</div>
+
+<div class="header">
+  <div class="date-line" id="dateLine"></div>
+  <div class="day-title" id="dayTitle"></div>
+  <div class="progress-bar"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
+  <div class="progress-text" id="pText"></div>
+</div>
+
+<div class="scroll" id="tasksView"></div>
+<div class="scroll" id="tipsView" style="display:none"></div>
+
+<div id="wooly-area">
+  <svg id="wooly-svg" onclick="woolyTap()" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="48" rx="14" ry="10" fill="#c8dff5"/>
+    <ellipse cx="30" cy="46" rx="9" ry="8" fill="#d4e8ff"/>
+    <ellipse cx="50" cy="46" rx="9" ry="8" fill="#d4e8ff"/>
+    <ellipse cx="37" cy="41" rx="8" ry="7" fill="#ddeeff"/>
+    <ellipse cx="45" cy="41" rx="8" ry="7" fill="#ddeeff"/>
+    <ellipse cx="41" cy="38" rx="6" ry="5.5" fill="#e8f4ff"/>
+    <rect x="34" y="55" width="4" height="7" rx="2" fill="#8ab4d8"/>
+    <rect x="42" y="55" width="4" height="7" rx="2" fill="#8ab4d8"/>
+    <ellipse cx="40" cy="33" rx="7.5" ry="7" fill="#b0cce8"/>
+    <ellipse cx="37" cy="28" rx="5" ry="4.5" fill="#ddeeff"/>
+    <ellipse cx="43" cy="28" rx="5" ry="4.5" fill="#ddeeff"/>
+    <ellipse cx="40" cy="26" rx="4" ry="3.8" fill="#e8f4ff"/>
+    <ellipse cx="37" cy="34" rx="1.8" ry="2" fill="#1a3060"/>
+    <ellipse cx="43" cy="34" rx="1.8" ry="2" fill="#1a3060"/>
+    <circle cx="37.7" cy="33.3" r=".7" fill="white"/>
+    <circle cx="43.7" cy="33.3" r=".7" fill="white"/>
+    <ellipse cx="35" cy="36.5" rx="2" ry="1.2" fill="#ffb3c6" opacity=".5"/>
+    <ellipse cx="45" cy="36.5" rx="2" ry="1.2" fill="#ffb3c6" opacity=".5"/>
+    <path d="M 38.5 37.5 Q 40 39 41.5 37.5" stroke="#1a3060" stroke-width=".9" fill="none" stroke-linecap="round"/>
+    <polygon points="40,21 40.8,23.5 43.5,23.5 41.4,25.1 42.2,27.6 40,26 37.8,27.6 38.6,25.1 36.5,23.5 39.2,23.5" fill="#f5e4a8" opacity=".95" transform="scale(.75) translate(13.5,4)"/>
+  </svg>
+  <div id="wbubble" onclick="woolyTap()"></div>
+</div>
+
+<script>
+const DAYS=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+const SCHEDULE = {
+  1:{title:'Lundi',sub:'Nouvelle semaine, nouvelle énergie ✦',tasks:[
+    {id:'l1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'Tirage cartes physiques — pick a card format. Même vidéo sur les 2.',bdg:'bc',lbl:'Contenu'},
+    {id:'l2',p:0,name:'𝕏 Twitter',detail:'"new week, new energy ✨ pick your 3 cards → magicalchart.com"',bdg:'bc',lbl:'Contenu'},
+    {id:'l3',p:0,name:'🧵 Threads',detail:'Post pick a card + lien magicalchart.com',bdg:'bc',lbl:'Contenu'},
+    {id:'l4',p:0,name:'📘 Facebook',detail:'Partager le Reel Instagram sur ta page Magical Chart',bdg:'bc',lbl:'Contenu'},
+    {id:'l5',p:0,name:'📌 Pinterest',detail:'5 épingles — visuels pick a card avec lien',bdg:'bc',lbl:'Contenu'},
+    {id:'l6',p:0,name:'👽 Reddit r/tarot',detail:'3 commentaires utiles sur des posts récents',bdg:'be',lbl:'Engage'},
+    {id:'l7',p:0,name:'📸 Story Instagram',detail:'1 story — quelle carte t\'appelle aujourd\'hui?',bdg:'bc',lbl:'Contenu'},
+  ]},
+  2:{title:'Mardi',sub:'Engagement communauté',tasks:[
+    {id:'m1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'Pick a card avec révélation de la signification en fin de vidéo',bdg:'bc',lbl:'Contenu'},
+    {id:'m2',p:0,name:'𝕏 Twitter',detail:'"pick a card 🌙 which one calls to you? comment 1, 2 or 3"',bdg:'bc',lbl:'Contenu'},
+    {id:'m3',p:0,name:'🧵 Threads — commenter',detail:'5 posts #tarotthreads — réponses authentiques',bdg:'be',lbl:'Engage'},
+    {id:'m4',p:0,name:'📘 Facebook groupes',detail:'1 commentaire utile dans un groupe tarot actif',bdg:'be',lbl:'Engage'},
+    {id:'m5',p:0,name:'📌 Pinterest',detail:'5 épingles — citations mystiques avec visuels',bdg:'bc',lbl:'Contenu'},
+    {id:'m6',p:0,name:'👽 Reddit',detail:'3 commentaires — répondre aux questions tarot',bdg:'be',lbl:'Engage'},
+    {id:'m7',p:0,name:'📸 Story Instagram',detail:'Sondage pick a card — 1, 2 ou 3',bdg:'bc',lbl:'Contenu'},
+  ]},
+  3:{title:'Mercredi',sub:'Mid-week momentum',tasks:[
+    {id:'me1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'Explication d\'une carte du Major Arcana en vidéo courte',bdg:'bc',lbl:'Contenu'},
+    {id:'me2',p:0,name:'𝕏 Twitter',detail:'"what does the universe want you to know today? 🔮 → magicalchart.com"',bdg:'bc',lbl:'Contenu'},
+    {id:'me3',p:0,name:'🧵 Threads',detail:'Post conversationnel — question à l\'audience tarot',bdg:'be',lbl:'Engage'},
+    {id:'me4',p:0,name:'📘 Facebook',detail:'Partager le Reel + interagir dans 1 groupe',bdg:'be',lbl:'Engage'},
+    {id:'me5',p:0,name:'📌 Pinterest',detail:'5 épingles — signification d\'une carte du jour',bdg:'bc',lbl:'Contenu'},
+    {id:'me6',p:0,name:'👽 Reddit',detail:'3 commentaires utiles',bdg:'be',lbl:'Engage'},
+  ]},
+  4:{title:'Jeudi',sub:'SEO & contenu long terme',tasks:[
+    {id:'j1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'Tirage 3 cartes avec explication Past/Present/Future',bdg:'bc',lbl:'Contenu'},
+    {id:'j2',p:0,name:'𝕏 Twitter',detail:'"past · present · future 🌟 your spread is ready ✦ magicalchart.com"',bdg:'bc',lbl:'Contenu'},
+    {id:'j3',p:0,name:'🧵 Threads',detail:'Post éducatif — explication d\'une carte en 3 lignes',bdg:'bc',lbl:'Contenu'},
+    {id:'j4',p:0,name:'📘 Facebook',detail:'Partager le Reel + 1 post éducatif sur la page',bdg:'bc',lbl:'Contenu'},
+    {id:'j5',p:0,name:'📌 Pinterest',detail:'5 épingles — spreads tarot et leurs positions',bdg:'bc',lbl:'Contenu'},
+    {id:'j6',p:0,name:'🔍 SEO — GitHub',detail:'Déployer 1-2 nouvelles pages SEO si prêtes',bdg:'bs',lbl:'SEO'},
+  ]},
+  5:{title:'Vendredi',sub:'Energy check fin de semaine',tasks:[
+    {id:'v1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'Carte mystérieuse face cachée avec révélation dramatique',bdg:'bc',lbl:'Contenu'},
+    {id:'v2',p:0,name:'𝕏 Twitter',detail:'"the cards have something to tell you 🐑✦ free reading at magicalchart.com"',bdg:'bc',lbl:'Contenu'},
+    {id:'v3',p:0,name:'🧵 Threads',detail:'5 commentaires + 1 Wooly quote mystique',bdg:'be',lbl:'Engage'},
+    {id:'v4',p:0,name:'📘 Facebook groupes',detail:'Partager 1 Reel dans un groupe tarot pertinent',bdg:'be',lbl:'Engage'},
+    {id:'v5',p:0,name:'📌 Pinterest',detail:'5 épingles — visuels weekend energy',bdg:'bc',lbl:'Contenu'},
+    {id:'v6',p:0,name:'👽 Reddit',detail:'3 commentaires — préparer le weekend',bdg:'be',lbl:'Engage'},
+  ]},
+  6:{title:'Samedi',sub:'Weekend energy 🌙',tasks:[
+    {id:'s1',p:1,name:'🎵 TikTok + 📸 Instagram',detail:'"weekend energy check 🌙 what are your cards saying?"',bdg:'bc',lbl:'Contenu'},
+    {id:'s2',p:0,name:'𝕏 Twitter',detail:'"weekend energy check 🌙 free reading → magicalchart.com #tarot"',bdg:'bc',lbl:'Contenu'},
+    {id:'s3',p:0,name:'🧵 Threads',detail:'"quelle carte représente ton weekend?" + lien',bdg:'be',lbl:'Engage'},
+    {id:'s4',p:0,name:'📘 Facebook',detail:'Partager le Reel + post weekend sur la page',bdg:'bc',lbl:'Contenu'},
+    {id:'s5',p:0,name:'📌 Pinterest',detail:'5 épingles — weekend vibes mystiques',bdg:'bc',lbl:'Contenu'},
+    {id:'s6',p:0,name:'💬 Répondre aux commentaires',detail:'TikTok, Instagram, Threads — tous les réseaux',bdg:'be',lbl:'Engage'},
+  ]},
+  0:{title:'Dimanche',sub:'Bilan + préparation semaine 📊',tasks:[
+    {id:'d1',p:1,name:'🎬 Filmer 7 vidéos',detail:'Toutes les vidéos de la semaine en une session batch',bdg:'bc',lbl:'Contenu'},
+    {id:'d2',p:1,name:'📊 Bilan métriques — 30 min',detail:'TikTok complétion · Analytics visiteurs · Stripe clics · Pinterest clics',bdg:'br',lbl:'Bilan'},
+    {id:'d3',p:0,name:'📅 Buffer — programmer tweets',detail:'7 tweets programmés à 9h pour toute la semaine',bdg:'bc',lbl:'Contenu'},
+    {id:'d4',p:0,name:'🔔 OneSignal',detail:'Programmer la notification push de demain à 9h',bdg:'bc',lbl:'Contenu'},
+    {id:'d5',p:0,name:'📘 Facebook — préparer posts',detail:'Programmer les posts de la semaine sur la page',bdg:'bc',lbl:'Contenu'},
+    {id:'d6',p:0,name:'📌 Pinterest — batch épingles',detail:'Créer 30-50 épingles pour la semaine',bdg:'bc',lbl:'Contenu'},
+    {id:'d7',p:0,name:'🔍 GitHub — SEO',detail:'Déployer les nouvelles pages SEO si prêtes',bdg:'bs',lbl:'SEO'},
+    {id:'d8',p:0,name:'🗺️ Search Console',detail:'Resoumettre sitemap si nouvelles pages ajoutées',bdg:'bs',lbl:'SEO'},
+  ]},
+};
+
+const TIPS = [
+  {cat:'TikTok — Ce qui marche',title:'Format "pick a card" avec vraies cartes',body:'Les tirages de cartes physiques performent toujours mieux que les démos de site. Filme les cartes en gros plan, laisse du mystère avant la révélation. La musique doit être mystique et lente.',gold:1},
+  {cat:'TikTok — Ce qui marche',title:'Taux de complétion > tout',body:'L\'algo TikTok récompense les vidéos regardées jusqu\'au bout. Mets le reveal en fin de vidéo pour obliger les gens à rester. "Comment 1, 2 or 3 and I\'ll reveal your card" crée de l\'engagement.',gold:1},
+  {cat:'TikTok — Inspiration',title:'Comptes à étudier',body:'<strong>@tarotbyleyla</strong>, <strong>@thetarotwitchh</strong>, <strong>@moderndaymagick</strong> — analyse leur format, leur rythme, leur musique. Note ce qui a le plus de vues chez eux et adapte.',gold:0},
+  {cat:'Instagram — Ce qui marche',title:'Les Reels courts convertissent',body:'15-30 secondes max. Un visuel fort, du texte à l\'écran lisible, une CTA claire "free reading → link in bio". Recycle exactement tes TikToks.',gold:0},
+  {cat:'Pinterest — SEO visuel',title:'Titres avec mots-clés précis',body:'Ne mets pas "beautiful tarot" — mets <strong>"free tarot reading online no account needed"</strong>. Pinterest c\'est un moteur de recherche visuel. Les titres doivent correspondre à ce que les gens cherchent.',gold:1},
+  {cat:'Pinterest — Ce qui marche',title:'Format vertical 2:3, texte lisible',body:'Les meilleures épingles tarot ont : fond sombre mystique, 1 image de carte, titre clair en haut, petit texte en bas. Tes couleurs Magical Chart sont parfaites pour Pinterest.',gold:0},
+  {cat:'SEO — Bonnes pratiques',title:'Liens internes entre tes pages',body:'Chaque page SEO doit pointer vers 2-3 autres pages. Google suit ces liens pour indexer et comprendre la structure de ton site. Ajoute des liens naturels dans le texte.',gold:1},
+  {cat:'SEO — Bonnes pratiques',title:'Mettre à jour les pages existantes',body:'Google récompense le contenu frais. Ajouter une section FAQ ou un paragraphe à une page existante peut suffire à améliorer son ranking. Fais-le 1x par mois.',gold:0},
+  {cat:'Contenu — Idées',title:'Serie "Wooly explains" — 1 carte par semaine',body:'Format hebdomadaire : Wooly explique une carte en vidéo courte + tu renvoies vers la page SEO correspondante. Double impact : réseaux sociaux + SEO.',gold:1},
+  {cat:'Contenu — Idées',title:'Contenu "trend hijacking"',body:'Quand il y a un trend TikTok populaire, adapte-le au tarot. "POV: The Tower just appeared in your reading". Utilise les sons et formats tendance de la semaine.',gold:0},
+  {cat:'Reddit — Stratégie',title:'Donner avant de promouvoir',body:'30 jours de commentaires utiles avant de mentionner ton site. Les posts qui marchent sur r/tarot : "I pulled this card 3 times this week, what does it mean?" ou interpréter les tirages des autres.',gold:0},
+  {cat:'YouTube — S\'inspirer',title:'Chaînes à regarder pour s\'améliorer',body:'<strong>Labyrinthos Academy</strong> (SEO + contenu éducatif), <strong>Spiritual Insights</strong> (format vidéo tarot qui convertit), <strong>Yes Supernova</strong> (branding mystique). Note leurs techniques.',gold:0},
+  {cat:'Métriques — Comprendre',title:'Le seul chiffre qui compte vraiment',body:'Les visiteurs sur ton site qui voient le paywall. Pas les vues TikTok, pas les abonnés Instagram. Si des gens arrivent sur le site et voient le paywall, tu es sur la bonne voie.',gold:1},
+  {cat:'Métriques — Comprendre',title:'Taux de complétion TikTok > 50%',body:'Si plus de 50% des spectateurs regardent jusqu\'au bout, l\'algo va pousser ta vidéo plus loin. En dessous de 30% = reformate. Vérifie ça chaque dimanche dans Analytics TikTok.',gold:0},
+  {cat:'Mindset — Rappels importants',title:'La régularité bat la perfection',body:'Une vidéo imparfaite postée vaut infiniment mieux qu\'une vidéo parfaite jamais postée. L\'algo récompense la constance. 30 jours sans manquer = le vrai défi.',gold:1},
+  {cat:'Mindset — Rappels importants',title:'3 mois de données pour juger',body:'Il faut au minimum 3 mois de contenu régulier pour avoir des données significatives. Avant ça, tu ne peux pas vraiment savoir ce qui marche. Continue et observe.',gold:0},
+];
+
+const WOOLY_MSGS = [
+  "Tu fais du super boulot aujourd'hui 🐑✦",
+  "Chaque tâche cochée t'amène plus près de tes objectifs ✨",
+  "Même les petits progrès comptent. Tu construis quelque chose de vrai. 🌙",
+  "La régularité bat la perfection. T'es là, c'est l'essentiel. ⭐",
+  "Un jour à la fois. Tu gères. 🌿",
+  "Wooly croit en toi. Vraiment. 💙",
+  "Le trafic vient à celles qui persistent. Continue. ✦",
+  "Tu as fait du chemin. N'oublie pas ça. 🌟",
+  "Même une seule tâche cochée c'est une victoire. 🏆",
+  "magicalchart.com existe grâce à toi. C'est pas rien. 🔮",
+  "Les grands projets commencent exactement comme ça. 🌱",
+  "Wooly a vérifié — tu es sur la bonne voie. 🐑✦",
+];
+const WOOLY_DONE = [
+  "Toutes les tâches cochées ! Wooly est très fier de toi. 🐑✦🎉",
+  "C'est fini pour aujourd'hui ! Va te reposer, tu l'as mérité. 🌙",
+  "100% ! Tu es une machine. Wooly t'adore. 🐑💙",
+];
+
+const today = new Date();
+const dow = today.getDay();
+const key = 'mc_' + today.toISOString().slice(0,10);
+let checked = JSON.parse(localStorage.getItem(key)||'{}');
+let woolyIdx = 0;
+let woolyTimer = null;
+let activeTab = 'tasks';
+
+function showTab(t) {
+  activeTab = t;
+  document.getElementById('tasksView').style.display = t==='tasks'?'block':'none';
+  document.getElementById('tipsView').style.display = t==='tips'?'block':'none';
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.className = 'tab ' + ((i===0&&t==='tasks')||(i===1&&t==='tips')?'active':'inactive');
+  });
+}
+
+function render() {
+  const d = SCHEDULE[dow];
+  document.getElementById('dateLine').textContent = DAYS[dow]+' '+today.getDate()+' '+MONTHS[today.getMonth()]+' '+today.getFullYear();
+  document.getElementById('dayTitle').innerHTML = d.title+' — <em>'+d.sub+'</em>';
+
+  const list = document.getElementById('tasksView');
+  list.innerHTML = '';
+  const pri = d.tasks.filter(t=>t.p);
+  const reg = d.tasks.filter(t=>!t.p);
+  if(pri.length){addLbl(list,'⚡ Priorité absolue');pri.forEach(t=>list.appendChild(mkTask(t)));}
+  if(reg.length){addLbl(list,'✦ À faire aujourd\'hui');reg.forEach(t=>list.appendChild(mkTask(t)));}
+  updateProg();
+
+  // Tips
+  const tv = document.getElementById('tipsView');
+  tv.innerHTML = '';
+  addLbl(tv,'💡 Conseils & bonnes pratiques');
+  TIPS.forEach(tip=>{
+    const c = document.createElement('div');
+    c.className = 'tip-card'+(tip.gold?' gold':'');
+    c.innerHTML = '<div class="tip-cat">'+tip.cat+'</div><div class="tip-title">'+tip.title+'</div><div class="tip-body">'+tip.body+'</div>';
+    tv.appendChild(c);
+  });
+
+  setTimeout(()=>{
+    showWooly("Hello ! Voici ton planning du "+DAYS[dow]+" 🐑 Clique sur moi pour de l'encouragement ✦");
+    setTimeout(hideWooly,4500);
+  },1500);
+}
+
+function addLbl(parent,txt){const d=document.createElement('div');d.className='sec-lbl';d.textContent=txt;parent.appendChild(d);}
+
+function mkTask(t){
+  const div=document.createElement('div');
+  div.className='task'+(t.p?' priority':'')+(checked[t.id]?' done':'');
+  div.innerHTML=`<div class="chk"><span class="chk-ico">✓</span></div><div class="tb"><div class="task-name">${t.name}</div><div class="task-detail">${t.detail}</div></div><span class="bdg ${t.bdg}">${t.lbl}</span>`;
+  div.addEventListener('click',()=>toggleTask(t.id,div));
+  return div;
+}
+
+function toggleTask(id,el){
+  checked[id]=!checked[id];
+  localStorage.setItem(key,JSON.stringify(checked));
+  el.classList.toggle('done',checked[id]);
+  updateProg();
+  if(checked[id]){
+    const total=SCHEDULE[dow].tasks.length;
+    const done=SCHEDULE[dow].tasks.filter(t=>checked[t.id]).length;
+    if(done===total) setTimeout(()=>showWooly(WOOLY_DONE[Math.floor(Math.random()*WOOLY_DONE.length)]),300);
+  }
+}
+
+function updateProg(){
+  const total=SCHEDULE[dow].tasks.length;
+  const done=SCHEDULE[dow].tasks.filter(t=>checked[t.id]).length;
+  const pct=total?Math.round((done/total)*100):0;
+  document.getElementById('pFill').style.width=pct+'%';
+  document.getElementById('pText').textContent=done+' / '+total+' tâches · '+pct+'%';
+}
+
+function showWooly(msg){if(woolyTimer)clearTimeout(woolyTimer);const b=document.getElementById('wbubble');b.textContent=msg;b.classList.add('show');}
+function hideWooly(){document.getElementById('wbubble').classList.remove('show');}
+function woolyTap(){
+  if(woolyTimer)clearTimeout(woolyTimer);
+  const total=SCHEDULE[dow].tasks.length;
+  const done=SCHEDULE[dow].tasks.filter(t=>checked[t.id]).length;
+  const msg=done===total&&total>0?WOOLY_DONE[Math.floor(Math.random()*WOOLY_DONE.length)]:WOOLY_MSGS[woolyIdx++%WOOLY_MSGS.length];
+  showWooly(msg);
+  woolyTimer=setTimeout(hideWooly,5000);
+}
+
+(function(){
+  const bg=document.getElementById('bgCanvas');const bx=bg.getContext('2d');let W,H,stars=[];
+  function resize(){W=bg.width=window.innerWidth;H=bg.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  function rnd(a,b){return a+Math.random()*(b-a);}
+  for(let i=0;i<120;i++)stars.push({x:rnd(0,1),y:rnd(0,1),r:rnd(.2,1.1),o:rnd(.1,.5),s:rnd(.1,.4),blue:Math.random()<.3});
+  function loop(){bx.clearRect(0,0,W,H);const t=Date.now()*.001;stars.forEach(s=>{const op=Math.max(.03,Math.min(.5,s.o+Math.sin(t*s.s)*.1));bx.beginPath();bx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);bx.fillStyle=s.blue?`rgba(90,176,255,${op})`:`rgba(215,232,255,${op})`;bx.fill();});requestAnimationFrame(loop);}
+  loop();
+})();
+
+render();
+</script>
+</body>
+</html>
