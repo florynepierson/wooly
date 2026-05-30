@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MC Planner">
 <meta name="theme-color" content="#010810">
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root{--gold2:#e8c060;--sky:#5ab0ff;--pale:#d8ecff;--soft:#8ab4d8;--white:#eef6ff;--gold:#c8922a;}
@@ -324,6 +325,7 @@ function woolyTap(){
 })();
 
 render();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>
 </body>
 </html>
